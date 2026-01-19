@@ -1,20 +1,10 @@
 # Human Activity Recognition Project
 
-## Problem Description
+## What is This?
 
-This project uses machine learning to predict human activities from smartphone sensor data.
+This project uses machine learning (XGBoost) to predict what activity someone is doing based on their smartphone sensor data.
 
-### Why This Matters
-
-Smartphones have accelerometers and gyroscopes that can detect movement. By analyzing this sensor data, we can automatically recognize what activity a person is doing without them having to manually log it. This is useful for:
-
-- **Fitness apps** - automatically track workouts
-- **Health monitoring** - detect if elderly people have fallen
-- **Research** - study human behavior patterns
-
-### What We're Trying to Do
-
-The goal is to build a model that can classify activities into 6 categories:
+**The 6 activities:**
 1. Walking
 2. Walking Upstairs
 3. Walking Downstairs
@@ -22,71 +12,70 @@ The goal is to build a model that can classify activities into 6 categories:
 5. Standing
 6. Laying down
 
-The model takes sensor readings (acceleration and rotation) and predicts which activity the person is performing.
+## Why This is Useful
+
+- Fitness apps can automatically track your workouts
+- Health apps can detect if elderly people have fallen
+- Phones can adapt to what you're doing (like turning off notifications when you're exercising)
 
 ## Dataset
 
-We're using the UCI Human Activity Recognition dataset. It has data from 30 people aged 19-48 who wore a smartphone while doing different activities.
+Using the UCI HAR dataset - 30 people wore smartphones and did different activities while sensors recorded their movement.
 
-**Dataset Details:**
-- Training data: 7,352 samples
-- Test data: 2,947 samples
-- Features: 561 (calculated from sensor readings)
-- Activities: 6 different types
-- All data is already cleaned and normalized
+- 7,352 training samples
+- 2,947 test samples
+- 561 features from accelerometer and gyroscope
+- Data is in `data/UCI HAR Dataset/`
 
-The dataset is included in this repo under `data/UCI HAR Dataset/`.
+## What I Did
 
-## Exploratory Data Analysis
+### 1. Explored the Data (EDA)
 
-I did EDA in the Jupyter notebook `notebook/analysis.ipynb`. Here's what I found:
+See `notebook/analysis.ipynb` for details. Found:
+- No missing data (good!)
+- All values normalized between -1 and 1
+- Classes are balanced
+- Body acceleration features are most important
 
-### Basic Checks
-- No missing values in the dataset
-- All values are normalized between -1 and 1
-- Classes are fairly balanced (each activity has similar number of samples)
+### 2. Trained Models
 
-### Important Findings
-- Body acceleration features are most important for predictions
-- Some features are highly correlated (which is expected for sensor data)
-- Walking activities have different patterns than stationary activities (sitting, standing)
+Tried a few different models:
+- **Random Forest** (100 trees): ~92% accuracy
+- **Random Forest** (200 trees): ~94% accuracy
+- **XGBoost** (100 trees): ~93% accuracy
+- **XGBoost** (200 trees): **~93% accuracy** ✅ (this is what we're using)
 
-## Models
+XGBoost worked best overall!
 
-I tried multiple models to find what works best:
+### 3. Built Deployments
 
-### Random Forest
-- First tried with 100 trees - got around 92% accuracy
-- Then tried 200 trees with max_depth=30 - got around 94% accuracy
-- Found that body acceleration and gravity features are most important
+Created two ways to use the model:
 
-### XGBoost
-- Tried 3 different configurations
-- Best config: 200 trees, max_depth=10, learning_rate=0.1
-- Got around 95% accuracy
+**Option 1: Streamlit App** (easier, has a UI)
+- Upload CSV files or use sliders
+- See predictions with charts
+- Good for demos
 
-### Results
-XGBoost performed slightly better than Random Forest. All models did pretty well (>90% accuracy) because the features are already well-preprocessed.
+**Option 2: FastAPI** (for developers)
+- REST API with endpoints
+- Can integrate into other apps
+- Good for production
 
-## How to Run
+## How to Run This
 
 ### Setup
 
-1. Install uv (it's faster than pip):
 ```bash
+# Install uv (fast package manager)
 curl -LsSf https://astral.sh/uv/install.sh | sh
-```
 
-2. Install dependencies:
-```bash
+# Install dependencies
 uv sync
-```
 
-3. Activate environment:
-```bash
-source .venv/bin/activate  # On Mac/Linux
+# Activate environment
+source .venv/bin/activate  # Mac/Linux
 # or
-.venv\Scripts\activate  # On Windows
+.venv\Scripts\activate  # Windows
 ```
 
 ### Train the Model
@@ -95,124 +84,145 @@ source .venv/bin/activate  # On Mac/Linux
 python train.py
 ```
 
-This will train the XGBoost model and save it to `notebook/models/`.
+This takes about 2-3 minutes and saves the model to `notebook/models/`.
 
-### Run the Notebook
-
-```bash
-jupyter notebook notebook/analysis.ipynb
-```
-
-The notebook shows all the analysis and model experiments.
-
-### Run the Web App
+### Run the Streamlit App (Local)
 
 ```bash
-cd deployment/streamlit
-streamlit run app.py
+streamlit run deployment/streamlit/app.py
 ```
 
 Then open http://localhost:8501 in your browser.
 
-## Deployment
-
-### Docker
-
-Build and run with Docker:
+### Run the FastAPI (Local)
 
 ```bash
-# Build
-docker build -t har-app .
-
-# Run
-docker run -p 8501:8501 har-app
+cd deployment/fastapi
+uvicorn main:app --reload
 ```
 
-Then go to http://localhost:8501
+API will be at http://localhost:8000
+- Docs: http://localhost:8000/docs
+- Health check: http://localhost:8000/health
 
-### Streamlit Cloud
+## Deploy to Cloud
 
-To deploy on Streamlit Cloud for free:
+### Streamlit (Easiest!)
 
-1. Push code to GitHub:
-```bash
-git init
-git add .
-git commit -m "HAR project"
-git push origin main
-```
+1. Push to GitHub:
+   ```bash
+   git add .
+   git commit -m "Ready to deploy"
+   git push origin main
+   ```
 
-2. Go to share.streamlit.io
-3. Connect your GitHub repo
-4. Set main file: `deployment/streamlit/app.py`
-5. Deploy!
+2. Go to https://share.streamlit.io
 
-You'll get a public URL to share.
+3. New app → Select your repo
+
+4. Main file: `deployment/streamlit/app.py`
+
+5. Click Deploy!
+
+You'll get a URL like: `https://your-app.streamlit.app`
+
+### FastAPI (Docker)
+
+1. Build Docker image:
+   ```bash
+   docker build -f Dockerfile.fastapi -t har-api .
+   ```
+
+2. Run locally:
+   ```bash
+   docker run -p 8000:8000 har-api
+   ```
+
+3. Deploy to Render.com (free):
+   - Go to render.com
+   - New Web Service
+   - Connect GitHub repo
+   - Runtime: Docker
+   - Dockerfile: `Dockerfile.fastapi`
+   - Deploy!
 
 ## Project Structure
 
 ```
 human_activity_recognition/
-├── data/
-│   └── UCI HAR Dataset/       # Dataset files
+├── data/                      # Dataset
 ├── notebook/
-│   ├── analysis.ipynb          # Main notebook with EDA and models
-│   ├── models/                 # Saved models (created after training)
-│   └── performance/            # Model results (created after training)
+│   ├── analysis.ipynb         # EDA and model experiments
+│   ├── models/                # Trained models (created by train.py)
+│   └── performance/           # Model results
 ├── deployment/
-│   └── streamlit/
-│       ├── app.py              # Web app
-│       └── requirements.txt    # Dependencies for deployment
-├── train.py                    # Script to train model
-├── pyproject.toml              # Dependencies
-├── Dockerfile                  # For Docker deployment
-└── README.md                   # This file
+│   ├── streamlit/
+│   │   ├── app.py            # Streamlit web app
+│   │   └── requirements.txt
+│   └── fastapi/
+│       ├── main.py           # FastAPI REST API
+│       ├── test_model.py     # Test model performance
+│       ├── test_api.py       # Test API endpoints
+│       └── requirements.txt
+├── train.py                   # Train the model
+├── pyproject.toml            # Dependencies (uv)
+├── Dockerfile.fastapi        # Docker for FastAPI
+└── README.md                 # This file
 ```
-
-## Dependencies
-
-All dependencies are in `pyproject.toml`. Main ones:
-- pandas - data manipulation
-- numpy - numerical operations
-- scikit-learn - Random Forest model
-- xgboost - XGBoost model
-- streamlit - web app
-- matplotlib, seaborn - visualizations
-- jupyter - notebooks
-
-To install: `uv sync`
 
 ## Results
 
-The final XGBoost model achieves **~95% accuracy** on the test set.
+**Model Performance:**
+- Overall Accuracy: **92.84%**
+- Best at detecting: LAYING (100%), WALKING (97.6%)
+- Gets confused: SITTING vs STANDING (82%)
 
-**Confusion Matrix shows:**
-- Walking activities are sometimes confused with each other (walking vs walking upstairs)
-- Stationary activities (sitting, standing, laying) are well separated
-- Overall the model works quite well
+**Per Activity:**
+- WALKING: 97.6%
+- WALKING_UPSTAIRS: 91.5%
+- WALKING_DOWNSTAIRS: 91.4%
+- SITTING: 82.5%
+- STANDING: 93.1%
+- LAYING: 100%
 
-**Feature Importance:**
-- Top features are related to body acceleration magnitude
-- Gravity-related features help distinguish stationary vs moving activities
+Pretty good! The model sometimes mixes up SITTING and STANDING because they look similar in the sensor data.
 
-## Future Improvements
+## Tools Used
 
-Things I could add later:
-- Try neural networks (LSTM or CNN)
-- Do more hyperparameter tuning
-- Add real-time prediction from phone
-- Deploy to cloud platform
+- **XGBoost** - main model
+- **pandas, numpy** - data handling
+- **scikit-learn** - metrics and preprocessing
+- **matplotlib, seaborn** - visualizations
+- **Streamlit** - web app UI
+- **FastAPI** - REST API
+- **uv** - fast dependency manager
+- **Docker** - containerization
+
+## What Could Be Better
+
+- Try LSTM neural networks (might work better with time-series data)
+- Add more activities (running, cycling, etc.)
+- Get real-time predictions from phone
+- Deploy with CI/CD pipeline
 
 ## Notes
 
-This project was built for a machine learning capstone. The dataset is already well-prepared which makes the ML part straightforward. The main work was:
-- Understanding the data through EDA
+This was a capstone project. The dataset is already well-prepared so the hard work was:
+- Understanding what features matter
 - Trying different models
-- Finding best parameters
-- Building a deployment pipeline
+- Building a working deployment
 
-## References
+Model is saved as `notebook/models/model.pkl` and can be loaded with joblib.
 
-- UCI HAR Dataset: https://archive.ics.uci.edu/ml/datasets/human+activity+recognition+using+smartphones
-- XGBoost documentation: https://xgboost.readthedocs.io/
-- Streamlit docs: https://docs.streamlit.io/
+## Links
+
+- Dataset: https://archive.ics.uci.edu/ml/datasets/human+activity+recognition+using+smartphones
+- XGBoost: https://xgboost.readthedocs.io/
+- Streamlit: https://docs.streamlit.io/
+- FastAPI: https://fastapi.tiangolo.com/
+
+---
+
+**Questions?** Open an issue or reach out!
+
+**Live Demo:** [Add your Streamlit Cloud URL here after deploying]

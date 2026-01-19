@@ -45,12 +45,14 @@ model = xgb.XGBClassifier(
     n_estimators=200,
     max_depth=10,
     learning_rate=0.1,
-    random_state=42
+    random_state=42,
+    tree_method='hist'
 )
-model.fit(X_train, y_train)
+# Convert to numpy arrays for compatibility with newer XGBoost
+model.fit(X_train.values, y_train)
 
 print("\nEvaluating...")
-predictions = model.predict(X_test)
+predictions = model.predict(X_test.values)
 accuracy = accuracy_score(y_test, predictions)
 
 print(f"\nAccuracy: {accuracy:.4f}")

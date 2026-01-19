@@ -1,0 +1,27 @@
+# Dockerfile for FastAPI deployment
+# Build from project root: docker build -f Dockerfile.fastapi -t har-fastapi .
+
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Copy and install requirements
+COPY deployment/fastapi/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy model files
+COPY notebook/models/model.pkl ./models/model.pkl
+COPY notebook/models/features.pkl ./models/features.pkl
+
+# Copy FastAPI app
+COPY deployment/fastapi/main.py .
+
+# Set environment variables for model paths
+ENV MODEL_PATH=./models/model.pkl
+ENV FEATURES_PATH=./models/features.pkl
+
+# Expose port
+EXPOSE 8000
+
+# Run FastAPI
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
