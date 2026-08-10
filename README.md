@@ -223,4 +223,4 @@ Model is saved as `notebook/models/model.pkl` and can be loaded with joblib.
 
 ---
 
-**Questions?** Open an issue or reach out!
+
